@@ -134,6 +134,15 @@ const calculateDiscountedLineTotal = (item: Order["items"][number]) => {
 
 const tenderLabel = (method: TenderMethod) => (method === "UPI" ? "UPI" : method[0]!.toUpperCase() + method.slice(1));
 
+// Cursor-aware highlight for premium surfaces (product tiles). Mutates CSS
+// custom properties directly on the DOM node instead of React state, so
+// tracking the pointer never triggers a re-render.
+const trackCursorGlow = (event: React.MouseEvent<HTMLElement>) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  event.currentTarget.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+  event.currentTarget.style.setProperty("--my", `${event.clientY - rect.top}px`);
+};
+
 export function POSPage() {
   const [tokenInput, setTokenInput] = useState("");
   const [hasToken, setHasToken] = useState(() => Boolean(getStoredTerminalToken()));
@@ -199,7 +208,13 @@ export function POSPage() {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
   const [brandFilter, setBrandFilter] = useState<string | null>(null);
+  const [trustExpanded, setTrustExpanded] = useState(false);
+  const [messageExpanded, setMessageExpanded] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setMessageExpanded(false);
+  }, [message]);
 
   useEffect(() => {
     if (!openPanel) return;
@@ -1090,14 +1105,37 @@ export function POSPage() {
         </div>
       </header>
 
-      {failureMode !== "online" ? <div className="trust-banner">Stock levels may be outdated until the queue syncs.</div> : null}
+      {failureMode !== "online" ? (
+        <button
+          aria-expanded={trustExpanded}
+          className="status-pill status-pill-warning"
+          onClick={() => setTrustExpanded((open) => !open)}
+          type="button"
+        >
+          <span aria-hidden>⚠</span>
+          {trustExpanded ? "Stock levels may be outdated until the queue syncs." : "Stock data may be stale"}
+        </button>
+      ) : null}
       {ownerOverride.authorised ? (
         <div className="owner-override-banner">
           <span>Owner override active · {Math.floor(ownerRemainingSeconds / 60)}:{String(ownerRemainingSeconds % 60).padStart(2, "0")}</span>
           <button onClick={() => void endOverrideSession()} type="button">End override</button>
         </div>
       ) : null}
-      {message ? <div className="message" role="status">{message}</div> : null}
+      {message ? (
+        <div
+          className="status-pill status-pill-info"
+          data-expanded={messageExpanded || undefined}
+          onClick={() => setMessageExpanded((open) => !open)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") setMessageExpanded((open) => !open);
+          }}
+          role="status"
+          tabIndex={0}
+        >
+          {message}
+        </div>
+      ) : null}
 
       {ownerPromptOpen ? (
         <div className="modal-backdrop" role="presentation">
@@ -1156,7 +1194,7 @@ export function POSPage() {
 
           <div className="product-grid">
             {filteredProducts.map((product) => (
-              <article className="product-card" key={product.id}>
+              <article className="product-card" key={product.id} onMouseMove={trackCursorGlow}>
                 <button
                   aria-expanded={expandedProductId === product.id}
                   onClick={() => {

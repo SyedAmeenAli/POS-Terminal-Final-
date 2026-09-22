@@ -7,16 +7,19 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #030806;
-  --bg-elevated: #060f09;
-  --surface: #0b1712;
-  --surface-2: #101f19;
-  --border: #1c2f27;
-  --border-strong: #2a4238;
+  /* Neutral charcoal, not green. Verified brand bg (rgb(3,8,6)) is used only
+     for --bg; every surface above it is a true neutral gray so mint reads as
+     a deliberate accent instead of tinting the whole shell. */
+  --bg: #050706;
+  --bg-elevated: #0a0c0c;
+  --surface: #0d1112;
+  --surface-2: #121718;
+  --border: #1c2224;
+  --border-strong: #2a3234;
 
-  --text: #e8f7ee;
-  --text-muted: #91a89b;
-  --text-faint: #5c7268;
+  --text: #eef1f0;
+  --text-muted: #96a09d;
+  --text-faint: #5f6a67;
 
   --accent: #9fffc0;
   --accent-strong: #d8ffe7;
@@ -65,22 +68,22 @@
   --border: #e1dccb;
   --border-strong: #cdc6ac;
 
-  --text: #16211a;
-  --text-muted: #5b6a5f;
-  --text-faint: #8b9689;
+  --text: #1a201d;
+  --text-muted: #5f6b66;
+  --text-faint: #8d9793;
 
-  --accent: #0f8a4d;
-  --accent-strong: #0b6b3b;
-  --accent-ink: #f2fff6;
+  --accent: #0a8f74;
+  --accent-strong: #086e5a;
+  --accent-ink: #f2fff9;
 
-  --success: #0f8a4d;
+  --success: #0a8f74;
   --warning: #8a5a00;
   --warning-ink: #fff6e0;
   --danger: #a3341f;
   --danger-ink: #fff0ec;
   --info: #1f5fb8;
 
-  --focus-ring: 0 0 0 3px rgb(15 138 77 / 0.25);
+  --focus-ring: 0 0 0 3px rgb(10 143 116 / 0.25);
 }
 
 @media (prefers-reduced-motion: reduce) {

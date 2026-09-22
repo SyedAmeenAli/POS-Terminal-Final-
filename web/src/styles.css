@@ -151,6 +151,28 @@ input::placeholder {
   color: var(--accent);
 }
 
+/* Restrained magnification for small icon-only controls: a scale nudge on
+   hover, not a proximity-tracked Dock effect. Keeps clicks precise. */
+.theme-toggle:hover:not(:disabled),
+.chip-button.icon-only:hover:not(:disabled),
+.catalog-head > button:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.theme-toggle:active:not(:disabled),
+.chip-button.icon-only:active:not(:disabled),
+.catalog-head > button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle:hover:not(:disabled),
+  .chip-button.icon-only:hover:not(:disabled),
+  .catalog-head > button:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
 /* Entry screens (terminal setup / blocked) -------------------------------- */
 
 .setup-screen {
@@ -350,23 +372,45 @@ input::placeholder {
   gap: 8px;
 }
 
-/* Banners ------------------------------------------------------------------ */
+/* Status pills --------------------------------------------------------------
+   Compact by default - a stale-stock notice or a queued-sale message never
+   occupies a full-width block. Full text is always in the DOM (role="status"
+   still announces it to assistive tech); the ellipsis is visual only, and
+   clicking/Enter/Space expands the row to wrap the complete text. */
 
-.trust-banner,
-.message {
+.status-pill {
+  align-items: center;
   animation: fade-up var(--dur-normal) var(--ease-out);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  padding: 9px 14px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  gap: 6px;
+  justify-self: start;
+  max-width: 100%;
+  min-height: unset;
+  padding: 6px 12px;
 }
 
-.trust-banner {
+.status-pill:not([data-expanded]) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-pill[data-expanded],
+.status-pill[aria-expanded="true"] {
+  white-space: normal;
+}
+
+.status-pill-warning {
   background: rgb(244 201 107 / 0.1);
   border: 1px solid rgb(244 201 107 / 0.35);
   color: var(--warning);
 }
 
-.message {
+.status-pill-info {
   background: rgb(156 198 255 / 0.1);
   border: 1px solid rgb(156 198 255 / 0.35);
   color: var(--info);
@@ -516,13 +560,36 @@ input::placeholder {
   border-radius: var(--radius-lg);
   display: grid;
   overflow: hidden;
+  position: relative;
   transition: border-color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
+}
+
+/* Cursor-aware highlight: near-zero opacity at rest, rises only on hover,
+   follows the pointer via --mx/--my set in trackCursorGlow. Kept extremely
+   subtle - a signal, not a glow effect. */
+.product-card::before {
+  background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 50%), rgb(159 255 192 / 0.08), transparent 70%);
+  content: "";
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity var(--dur-normal) var(--ease-out);
+  z-index: 1;
+}
+
+.product-card:hover::before {
+  opacity: 1;
 }
 
 .product-card:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
+}
+
+.product-card:hover .product-tile-media img {
+  transform: scale(1.03);
 }
 
 .product-card > button {
@@ -534,7 +601,9 @@ input::placeholder {
   gap: 0;
   min-height: unset;
   padding: 0;
+  position: relative;
   text-align: left;
+  z-index: 2;
 }
 
 .product-tile-media {
@@ -549,6 +618,7 @@ input::placeholder {
 .product-tile-media img {
   height: 100%;
   object-fit: cover;
+  transition: transform var(--dur-normal) var(--ease-out);
   width: 100%;
 }
 
@@ -584,6 +654,8 @@ input::placeholder {
   display: grid;
   gap: 8px;
   padding: 10px;
+  position: relative;
+  z-index: 2;
 }
 
 .variant-list button {
