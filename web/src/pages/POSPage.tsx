@@ -1105,35 +1105,42 @@ export function POSPage() {
         </div>
       </header>
 
-      {failureMode !== "online" ? (
-        <button
-          aria-expanded={trustExpanded}
-          className="status-pill status-pill-warning"
-          onClick={() => setTrustExpanded((open) => !open)}
-          type="button"
-        >
-          <span aria-hidden>⚠</span>
-          {trustExpanded ? "Stock levels may be outdated until the queue syncs." : "Stock data may be stale"}
-        </button>
+      {failureMode !== "online" || message ? (
+        <div className="status-bar">
+          {failureMode !== "online" ? (
+            <button
+              aria-expanded={trustExpanded}
+              className="status-row"
+              data-tone="warning"
+              onClick={() => setTrustExpanded((open) => !open)}
+              type="button"
+            >
+              <span aria-hidden className="status-dot" />
+              {trustExpanded ? "Stock levels may be outdated until the queue syncs." : "Stock data may be stale"}
+            </button>
+          ) : null}
+          {message ? (
+            <div
+              className="status-row"
+              data-expanded={messageExpanded || undefined}
+              data-tone="info"
+              onClick={() => setMessageExpanded((open) => !open)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") setMessageExpanded((open) => !open);
+              }}
+              role="status"
+              tabIndex={0}
+            >
+              <span aria-hidden className="status-dot" />
+              {message}
+            </div>
+          ) : null}
+        </div>
       ) : null}
       {ownerOverride.authorised ? (
         <div className="owner-override-banner">
           <span>Owner override active · {Math.floor(ownerRemainingSeconds / 60)}:{String(ownerRemainingSeconds % 60).padStart(2, "0")}</span>
           <button onClick={() => void endOverrideSession()} type="button">End override</button>
-        </div>
-      ) : null}
-      {message ? (
-        <div
-          className="status-pill status-pill-info"
-          data-expanded={messageExpanded || undefined}
-          onClick={() => setMessageExpanded((open) => !open)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") setMessageExpanded((open) => !open);
-          }}
-          role="status"
-          tabIndex={0}
-        >
-          {message}
         </div>
       ) : null}
 

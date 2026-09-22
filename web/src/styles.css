@@ -2,10 +2,18 @@
 
 * {
   box-sizing: border-box;
+  min-width: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 html {
   background: var(--bg);
+  overflow-x: hidden;
 }
 
 body {
@@ -13,6 +21,7 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   margin: 0;
+  overflow-x: hidden;
   transition: background-color var(--dur-normal) var(--ease-out), color var(--dur-normal) var(--ease-out);
 }
 
@@ -331,7 +340,7 @@ input::placeholder {
   box-shadow: var(--shadow-md);
   display: grid;
   gap: 10px;
-  left: 0;
+  max-width: calc(100vw - 32px);
   min-width: 240px;
   padding: 14px;
   position: absolute;
@@ -340,7 +349,17 @@ input::placeholder {
 }
 
 .popover-wide {
-  min-width: 320px;
+  min-width: min(320px, calc(100vw - 32px));
+}
+
+/* Every top-bar trigger sits inside the right-aligned .topbar-controls
+   group, so its popover is anchored by the trigger's RIGHT edge, not its
+   left. Anchoring left (the old rule) pushed the rightmost trigger's
+   popover - Recent Reprint - past the viewport edge, since the popover is
+   wider than its icon-only trigger and had nowhere to grow but off-screen. */
+.topbar-controls .popover {
+  left: auto;
+  right: 0;
 }
 
 @keyframes popover-in {
@@ -372,48 +391,71 @@ input::placeholder {
   gap: 8px;
 }
 
-/* Status pills --------------------------------------------------------------
-   Compact by default - a stale-stock notice or a queued-sale message never
-   occupies a full-width block. Full text is always in the DOM (role="status"
-   still announces it to assistive tech); the ellipsis is visual only, and
-   clicking/Enter/Space expands the row to wrap the complete text. */
+/* Status bar ------------------------------------------------------------
+   One shell-attached strip directly under the header, not floating
+   capsules scattered on the page. Each row is a compact line - dot +
+   truncated text - full text always in the DOM (role="status" still
+   announces it in full to assistive tech); a click/Enter/Space expands
+   that row to wrap. Severity is a dot color, never a full-row wash. */
 
-.status-pill {
-  align-items: center;
+.status-bar {
   animation: fade-up var(--dur-normal) var(--ease-out);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  display: inline-flex;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  gap: 6px;
-  justify-self: start;
-  max-width: 100%;
-  min-height: unset;
-  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: grid;
+  overflow: hidden;
 }
 
-.status-pill:not([data-expanded]) {
+.status-row {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  gap: 8px;
+  justify-content: flex-start;
+  min-height: unset;
+  padding: 7px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.status-row + .status-row {
+  border-top: 1px solid var(--border);
+}
+
+.status-row:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+  transform: none;
+}
+
+.status-row:not([data-expanded]):not([aria-expanded="true"]) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.status-pill[data-expanded],
-.status-pill[aria-expanded="true"] {
+.status-row[data-expanded],
+.status-row[aria-expanded="true"] {
   white-space: normal;
 }
 
-.status-pill-warning {
-  background: rgb(244 201 107 / 0.1);
-  border: 1px solid rgb(244 201 107 / 0.35);
+.status-row[data-tone="warning"] {
   color: var(--warning);
 }
 
-.status-pill-info {
-  background: rgb(156 198 255 / 0.1);
-  border: 1px solid rgb(156 198 255 / 0.35);
+.status-row[data-tone="info"] {
   color: var(--info);
+}
+
+.status-row .status-dot {
+  flex-shrink: 0;
 }
 
 .owner-override-banner {
@@ -490,12 +532,14 @@ input::placeholder {
   align-items: start;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 1fr) 400px;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 27vw, 420px);
+  min-height: calc(100vh - 150px);
 }
 
 .catalog-pane {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .catalog-head {
@@ -549,9 +593,13 @@ input::placeholder {
 }
 
 .product-grid {
+  align-content: start;
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .product-card {
