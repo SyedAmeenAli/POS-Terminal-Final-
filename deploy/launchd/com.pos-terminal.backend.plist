@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Template. Replace before installing:
+    REPLACE_WITH_SHOP_USER  - macOS account the till runs as
+    REPLACE_WITH_NODE_PATH  - absolute path to node (`which node`)
+
+  Three things this file deliberately does, each learned from a real install:
+
+  1. Invokes node directly rather than `pnpm start`. launchd runs with a minimal
+     PATH that excludes pnpm and nvm shims, so `pnpm` fails to spawn.
+  2. Sets no WorkingDirectory. macOS TCC blocks LaunchAgents from taking a cwd
+     under ~/Desktop, ~/Documents or ~/Downloads. The `cd` inside the command
+     runs after the process has started and is not subject to that restriction.
+  3. Logs to ~/Library/Logs, which the user already owns, avoiding sudo.
+     launchd does NOT create StandardOutPath directories — a missing directory
+     makes the job fail to spawn with no log explaining why. Create it first:
+       mkdir -p ~/Library/Logs/pos-terminal
+
+  The node path is absolute and therefore version-pinned. A node upgrade,
+  especially via nvm, silently breaks this job. Re-check it after upgrading.
+
+  Run `pnpm build` before loading — this executes compiled dist/ output.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.pos-terminal.backend</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd /Users/REPLACE_WITH_SHOP_USER/Desktop/pos-terminal &amp;&amp; REPLACE_WITH_NODE_PATH dist/src/index.js</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>NODE_ENV</key>
+    <string>production</string>
+  </dict>
+  <key>KeepAlive</key>
+  <true/>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>5</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/REPLACE_WITH_SHOP_USER/Library/Logs/pos-terminal/backend.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/REPLACE_WITH_SHOP_USER/Library/Logs/pos-terminal/backend.log</string>
+</dict>
+</plist>

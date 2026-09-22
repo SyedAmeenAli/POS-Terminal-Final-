@@ -1,0 +1,13 @@
+process.env.DATABASE_URL ??= "postgres://postgres:postgres@localhost:5432/test";
+process.env.NODE_ENV ??= "test";
+process.env.HOST ??= "127.0.0.1";
+process.env.SHOP_TIMEZONE ??= "Asia/Kolkata";
+process.env.GCP_SECRET_MANAGER_ENABLED ??= "false";
+process.env.CORS_ALLOWED_ORIGINS ??= "http://localhost:5173";
+process.env.TERMINAL_AUTH_CACHE_TTL_SECONDS ??= "60";
+process.env.GLOBAL_RATE_LIMIT_MAX_REQUESTS ??= "1000";
+process.env.GLOBAL_RATE_LIMIT_WINDOW_SECONDS ??= "60";
+process.env.CASHIER_PIN_MAX_FAILURES ??= "5";
+process.env.CASHIER_PIN_WINDOW_SECONDS ??= "300";
+process.env.RAZORPAY_LIVE_ENABLED ??= "false";
+process.env.EMAIL_LIVE_ENABLED ??= "false";

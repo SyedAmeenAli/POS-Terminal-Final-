@@ -1,0 +1,9 @@
+node_modules
+.pnpm-store
+.claude/
+.env
+.env.bak
+dist
+drizzle/migrations/meta
+.DS_Store
+uploads/

@@ -1,0 +1,13 @@
+# POS terminal reverse proxy.
+# Replace pos.example.com with the production hostname and add it to
+# CORS_ALLOWED_ORIGINS before exposing anything beyond localhost.
+
+pos.example.com {
+	reverse_proxy 127.0.0.1:3001
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+	}
+}

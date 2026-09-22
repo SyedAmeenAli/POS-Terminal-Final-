@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Template. Replace REPLACE_WITH_SHOP_USER before installing, and verify the
+  cloud-sql-proxy path matches this host (`which cloud-sql-proxy`; the Homebrew
+  google-cloud-sdk location differs between Apple Silicon and Intel).
+
+  Create the log directory first — launchd does not create it and the job will
+  silently fail to spawn without it:
+    mkdir -p ~/Library/Logs/pos-terminal
+
+  Load this BEFORE the backend: the backend's DATABASE_URL points at
+  127.0.0.1:15432, which only exists once this proxy is up.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.pos-terminal.cloud-sql-proxy</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/share/google-cloud-sdk/bin/cloud-sql-proxy</string>
+    <string>--address</string>
+    <string>127.0.0.1</string>
+    <string>--port</string>
+    <string>15432</string>
+    <string>ims-project-503105:asia-south2:ims-postgres</string>
+  </array>
+  <key>KeepAlive</key>
+  <true/>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>5</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/REPLACE_WITH_SHOP_USER/Library/Logs/pos-terminal/cloud-sql-proxy.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/REPLACE_WITH_SHOP_USER/Library/Logs/pos-terminal/cloud-sql-proxy.log</string>
+</dict>
+</plist>

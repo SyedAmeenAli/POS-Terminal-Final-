@@ -1,0 +1,536 @@
+:root {
+  color: #18211f;
+  background: #f5f1e8;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  border: 1px solid #c8c0ae;
+  border-radius: 6px;
+  font: inherit;
+  min-height: 40px;
+}
+
+button {
+  align-items: center;
+  background: #184c46;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 8px 12px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+input,
+select {
+  background: #fffdf8;
+  color: #18211f;
+  min-width: 0;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.setup-screen {
+  align-items: center;
+  display: flex;
+  min-height: 100vh;
+  justify-content: center;
+  padding: 24px;
+}
+
+.setup-panel,
+.panel,
+.receipt-panel {
+  background: #fffdf8;
+  border: 1px solid #ddd4c2;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.setup-panel {
+  max-width: 420px;
+  width: 100%;
+}
+
+.pos-app {
+  display: grid;
+  gap: 12px;
+  min-height: 100vh;
+  padding: 12px;
+}
+
+.top-bar {
+  align-items: center;
+  background: #fffdf8;
+  border: 1px solid #ddd4c2;
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.identity-group {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.status-banner {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  gap: 14px;
+  justify-content: flex-end;
+  line-height: 1.4;
+  min-width: 0;
+  text-align: right;
+}
+
+.status-banner span {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chip {
+  background: #e7f4ef;
+  border: 1px solid #bdd8ce;
+  border-radius: 999px;
+  color: #184c46;
+  display: inline-flex;
+  font-size: 13px;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+.chip[data-mode="offline"],
+.chip[data-mode="backend_unreachable"],
+.chip[data-mode="database_down"],
+.chip.warn,
+.trust-banner,
+.failure {
+  background: #fff2d2;
+  border-color: #e6c170;
+  color: #6c4400;
+}
+
+.trust-banner,
+.message {
+  border: 1px solid #e6c170;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.message {
+  background: #eaf1ff;
+  border-color: #b7c8ef;
+  color: #20396c;
+}
+
+.workspace {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+}
+
+.catalog-pane,
+.cart-pane,
+.ops-grid,
+.cart-lines,
+.variant-list,
+.recent-list {
+  display: grid;
+  gap: 10px;
+}
+
+.toolbar,
+.search-box,
+.button-row,
+.inline-fields {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.search-box {
+  background: #fffdf8;
+  border: 1px solid #c8c0ae;
+  border-radius: 6px;
+  flex: 1;
+  padding-left: 10px;
+}
+
+.search-box input {
+  border: 0;
+}
+
+.product-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+
+.product-card {
+  background: #fffdf8;
+  border: 1px solid #ddd4c2;
+  border-radius: 8px;
+  display: grid;
+  overflow: hidden;
+}
+
+.product-card > button,
+.variant-list button,
+.recent-list button {
+  align-items: flex-start;
+  background: #fffdf8;
+  color: #18211f;
+  display: grid;
+  justify-content: stretch;
+  text-align: left;
+}
+
+.variant-list {
+  padding: 8px;
+}
+
+.variant-list button {
+  background: #eef5f3;
+  border-color: #bdd8ce;
+}
+
+.cart-pane {
+  align-self: start;
+}
+
+.cart-header {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.cart-title {
+  flex-shrink: 0;
+}
+
+.cart-total {
+  flex: 1;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.4;
+  min-width: 0;
+  text-align: right;
+}
+
+.cart-line {
+  background: #fffdf8;
+  border: 1px solid #ddd4c2;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 10px;
+}
+
+.line-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.line-main strong {
+  overflow-wrap: anywhere;
+}
+
+.stepper {
+  align-items: center;
+  display: grid;
+  flex-shrink: 0;
+  gap: 4px;
+  /* minus · quantity input · unit · plus · remove. The quantity column is
+     wide enough for "12.345" — three decimals is the most the system can
+     represent, so it is the most that can ever appear here. */
+  grid-template-columns: 32px 72px auto 32px 32px;
+}
+
+.cart-qty-input {
+  font-variant-numeric: tabular-nums;
+  min-height: 32px;
+  padding: 0 6px;
+  text-align: right;
+  width: 100%;
+}
+
+/* The spin buttons sit where a thumb lands on a touch till, and the stepper
+   buttons either side already do that job better. */
+.cart-qty-input::-webkit-inner-spin-button,
+.cart-qty-input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.cart-qty-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.cart-qty-unit {
+  color: #6b6255;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.cart-line-batch {
+  color: #6b6255;
+  font-size: 0.8125rem;
+}
+
+.cart-qty-error {
+  color: #a3341f;
+  font-size: 0.8125rem;
+}
+
+.pay-blocked-note {
+  color: #a3341f;
+  font-size: 0.8125rem;
+  margin: 4px 0 0;
+  text-align: center;
+}
+
+.stepper button {
+  min-height: 32px;
+  padding: 0;
+}
+
+.discount-grid {
+  display: grid;
+  gap: 8px;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(82px, 0.4fr) minmax(0, 1fr);
+}
+
+.tender-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 110px minmax(0, 1fr);
+}
+
+.card-fields {
+  display: grid;
+  gap: 8px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ops-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.z-report {
+  display: grid;
+  gap: 4px;
+}
+
+.receipt-panel {
+  border-color: #88b6a8;
+}
+
+.receipt-paper {
+  background: #fff;
+  color: #111;
+  display: grid;
+  font-family: "Courier New", ui-monospace, monospace;
+  font-size: 13px;
+  gap: 10px;
+  line-height: 1.35;
+  max-width: 360px;
+}
+
+.receipt-center,
+.receipt-lines,
+.receipt-tenders {
+  display: grid;
+  gap: 4px;
+}
+
+.receipt-center {
+  justify-items: center;
+  text-align: center;
+}
+
+.receipt-marker {
+  border: 1px solid #111;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.receipt-meta,
+.receipt-totals {
+  border-top: 1px dashed #111;
+  display: grid;
+  gap: 3px 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding-top: 8px;
+}
+
+.receipt-line-item {
+  border-top: 1px dashed #111;
+  display: grid;
+  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-top: 6px;
+}
+
+.receipt-line-item span:first-child {
+  grid-column: 1 / -1;
+}
+
+.receipt-line-item strong {
+  text-align: right;
+}
+
+.receipt-tenders {
+  border-top: 1px dashed #111;
+  padding-top: 8px;
+}
+
+.recent-list {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.failure {
+  border: 1px solid #e6c170;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.owner-override-banner {
+  align-items: center;
+  background: #163832;
+  color: #f8faf7;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.owner-override-banner button {
+  background: #f8faf7;
+  color: #163832;
+}
+
+.modal-backdrop {
+  align-items: center;
+  background: rgb(0 0 0 / 42%);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 16px;
+  position: fixed;
+  z-index: 20;
+}
+
+.owner-modal {
+  background: #fffdf8;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  max-width: 360px;
+  padding: 18px;
+  width: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.error-text {
+  color: #9f2f2f;
+  font-weight: 700;
+}
+
+@media (max-width: 820px) {
+  .top-bar,
+  .status-banner,
+  .toolbar,
+  .button-row,
+  .inline-fields {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace,
+  .ops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-pane {
+    min-width: 0;
+  }
+
+  .cart-line,
+  .tender-row,
+  .card-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .stepper {
+    justify-self: start;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .pos-app > :not(.receipt-panel),
+  .receipt-panel .button-row {
+    display: none;
+  }
+
+  .pos-app {
+    display: block;
+    padding: 0;
+  }
+
+  .receipt-panel {
+    border: 0;
+    padding: 0;
+  }
+
+  .receipt-paper {
+    max-width: none;
+    width: 72mm;
+  }
+}

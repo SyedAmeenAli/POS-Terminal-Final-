@@ -1,0 +1,75 @@
+# The till had no CI at all until 2026-09-11.
+#
+# WHAT PROMPTED IT. pos-web went to production built without VITE_API_BASE, so
+# the bundle fell back to "/api" — which on that host is nginx serving
+# index.html. The shopkeeper's till read "Backend unreachable: cash sales
+# queue" and every sale would have queued, while the browser's network tab
+# showed nothing but 200s. scripts/check-pos-web-csp.ts had asserted exactly
+# that condition for weeks. Nothing ran it.
+#
+# The image build now carries the same check (web/Dockerfile), which is the one
+# gate every deploy passes through. This workflow is the earlier warning: it
+# fails on the pull request rather than at the counter.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: till-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  till:
+    name: Till — types, lint, tests, bundle guard
+    runs-on: ubuntu-latest
+
+    env:
+      # THE SAME ORIGIN PRODUCTION IS BUILT WITH, and the reason this job can
+      # catch the bug at all. If nginx.conf's connect-src and this value ever
+      # drift apart, the guard below fails here instead of in a shop.
+      VITE_API_BASE: https://pos-terminal-902186518684.asia-south2.run.app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck the service
+        run: pnpm typecheck
+
+      - name: Lint the service
+        run: pnpm lint
+
+      - name: Service tests
+        run: pnpm test
+
+      - name: Web lint
+        run: pnpm --filter pos-terminal-web lint
+
+      - name: Web tests
+        run: pnpm --filter pos-terminal-web test
+
+      # Builds with VITE_API_BASE set, exactly as a release does. A build
+      # WITHOUT it is what shipped the broken till, so the guard that follows
+      # is only meaningful against a bundle produced this way.
+      - name: Build the till bundle
+        run: pnpm --filter pos-terminal-web build
+
+      # THE GUARD. Fails when the bundle has no API origin baked in, or calls
+      # one nginx's connect-src does not allow. Both are invisible in the
+      # browser: nginx answers 200 with HTML for anything it cannot route.
+      - name: Bundle origin matches the CSP
+        run: pnpm check:pos-web-csp

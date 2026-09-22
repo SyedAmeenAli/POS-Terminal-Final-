@@ -1,0 +1,7 @@
+# Only dist/ and the two files above it are needed to build the image.
+# Without this, `--source web` uploaded node_modules on every deploy.
+node_modules/
+src/
+*.tsbuildinfo
+tsconfig*.json
+vite.config.ts
