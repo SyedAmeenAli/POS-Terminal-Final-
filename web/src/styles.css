@@ -129,32 +129,8 @@ input::placeholder {
   gap: 10px;
 }
 
-.ax-logo-mark {
+.ax-logo canvas {
   display: block;
-  transition: transform var(--dur-normal) var(--ease-out);
-}
-
-.ax-logo-tile {
-  fill: #0d1112;
-}
-
-.ax-logo-bolt {
-  fill: #8b5cf6;
-  transition: fill var(--dur-normal) var(--ease-out);
-}
-
-.ax-logo:hover .ax-logo-mark {
-  transform: rotate(-6deg) scale(1.05);
-}
-
-.ax-logo[data-active] .ax-logo-bolt {
-  fill: #a78bfa;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ax-logo:hover .ax-logo-mark {
-    transform: none;
-  }
 }
 
 .ax-wordmark {
