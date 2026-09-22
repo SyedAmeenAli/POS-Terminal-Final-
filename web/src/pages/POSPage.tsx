@@ -191,6 +191,33 @@ export function POSPage() {
   const lastScannerKeyRef = useRef(0);
   const syncGuardRef = useRef(false);
 
+  // Presentation-only state: which top-bar popover is open, and whether the
+  // rarely-used discount/split-tender controls are expanded. None of this
+  // touches order math, tender validation or any handler above/below — it
+  // only decides what is currently visible.
+  const [openPanel, setOpenPanel] = useState<"cashier" | "shift" | "queue" | "recent" | "status" | null>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [brandFilter, setBrandFilter] = useState<string | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!openPanel) return;
+    const closeOnOutsideOrEscape = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent) {
+        if (event.key === "Escape") setOpenPanel(null);
+        return;
+      }
+      if (headerRef.current && !headerRef.current.contains(event.target as Node)) setOpenPanel(null);
+    };
+    document.addEventListener("mousedown", closeOnOutsideOrEscape);
+    document.addEventListener("keydown", closeOnOutsideOrEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideOrEscape);
+      document.removeEventListener("keydown", closeOnOutsideOrEscape);
+    };
+  }, [openPanel]);
+
   const refreshQueue = useCallback(async () => {
     setQueuedSales(await listQueuedSales());
   }, []);
@@ -415,13 +442,20 @@ export function POSPage() {
     };
   }, [loadTillData, syncQueue]);
 
+  // Real facet derived from loaded products, never a fabricated category list.
+  const brands = useMemo(
+    () => Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).sort(),
+    [products],
+  );
+
   const filteredProducts = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return products;
-    return products.filter((product) =>
-      [product.name, product.brand, product.styleCode].some((value) => value?.toLowerCase().includes(needle)),
-    );
-  }, [products, query]);
+    return products.filter((product) => {
+      if (brandFilter && product.brand !== brandFilter) return false;
+      if (!needle) return true;
+      return [product.name, product.brand, product.styleCode].some((value) => value?.toLowerCase().includes(needle));
+    });
+  }, [products, query, brandFilter]);
 
   const lineDiscountedTotal = cart.reduce((total, item) => {
     const line = Number(item.variant.retailPrice) * item.quantity;
@@ -878,22 +912,180 @@ export function POSPage() {
         ? "REFUND"
         : null;
 
+  const discountExpanded = discountOpen || orderDiscount > 0;
+  const splitExpanded = splitOpen || tenders.length > 1;
+  const pendingQueueCount = queuedSales.filter((sale) => sale.status === "pending").length;
+  const failedQueueCount = queuedSales.filter((sale) => sale.status === "failed").length;
+
   return (
     <main className="pos-app">
-      <header className="top-bar">
-        <div className="identity-group">
-          <AxLogo size={28} />
-          <span className="chip" data-mode={failureMode}>
-            {connectivityLabel}
-          </span>
-          {queuedSales.some((sale) => sale.status === "pending") ? <span className="chip warn">Queue pending</span> : null}
+      <header className="top-bar" ref={headerRef}>
+        <div className="topbar-brand">
+          <AxLogo size={26} />
         </div>
-        <div className="status-banner">
-          <span>{shiftReport ? `Shift ${shiftReport.businessDate}` : "No open shift"}</span>
-          <span>
-            <UserRound aria-hidden size={16} />
-            {activeCashier ? `${activeCashier.name}${activeCashier.verified ? "" : " (unverified)"}` : "No cashier selected"}
-          </span>
+
+        <div className="topbar-controls">
+          <div className="topbar-item">
+            <button
+              aria-expanded={openPanel === "status"}
+              className="chip-button"
+              data-mode={failureMode}
+              data-testid="topbar-status-trigger"
+              onClick={() => setOpenPanel((current) => (current === "status" ? null : "status"))}
+              type="button"
+            >
+              <span aria-hidden className="status-dot" />
+              {connectivityLabel}
+            </button>
+            {openPanel === "status" ? (
+              <div className="popover" role="dialog">
+                <p>{connectivityLabel}</p>
+                {failureMode !== "online" ? <p className="popover-note">Stock levels may be outdated until the queue syncs.</p> : null}
+                {pendingQueueCount > 0 ? <p className="popover-note">{pendingQueueCount} sale{pendingQueueCount === 1 ? "" : "s"} queued.</p> : null}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="topbar-item">
+            <button
+              aria-expanded={openPanel === "cashier"}
+              className="chip-button"
+              data-testid="topbar-cashier-trigger"
+              onClick={() => setOpenPanel((current) => (current === "cashier" ? null : "cashier"))}
+              type="button"
+            >
+              <UserRound aria-hidden size={14} />
+              {activeCashier ? `${activeCashier.name}${activeCashier.verified ? "" : " (unverified)"}` : "No cashier"}
+            </button>
+            {openPanel === "cashier" ? (
+              <div className="popover" role="dialog">
+                <h3>Cashier</h3>
+                <div className="popover-fields">
+                  <select aria-label="Cashier picker" onChange={(event) => setCashierId(event.target.value)} value={cashierId}>
+                    <option value="">Select cashier</option>
+                    {cashiers.map((cashier) => (
+                      <option key={cashier.id ?? cashier.cashierId} value={cashier.id ?? cashier.cashierId}>{cashier.name}</option>
+                    ))}
+                  </select>
+                  <input aria-label="Cashier PIN" onChange={(event) => setCashierPin(event.target.value)} placeholder="PIN" type="password" value={cashierPin} />
+                  <div className="button-row">
+                    <button onClick={() => void chooseCashier()} type="button">Switch</button>
+                    {activeCashier ? <button onClick={signOutCashier} type="button">Sign out cashier</button> : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="topbar-item">
+            <button
+              aria-expanded={openPanel === "shift"}
+              className="chip-button"
+              data-testid="topbar-shift-trigger"
+              onClick={() => setOpenPanel((current) => (current === "shift" ? null : "shift"))}
+              type="button"
+            >
+              {shiftReport ? `Shift ${shiftReport.businessDate}` : "No open shift"}
+            </button>
+            {openPanel === "shift" ? (
+              <div className="popover popover-wide" role="dialog">
+                <h3>Shift</h3>
+                {shiftReport ? (
+                  <>
+                    <p>X report: {shiftReport.orderCount} orders · cash {money(shiftReport.tenders.cash)} · UPI {money(shiftReport.tenders.UPI)} · card {money(shiftReport.tenders.card)}</p>
+                    <div className="inline-fields">
+                      <input aria-label="Counted cash" onChange={(event) => setCountedCash(event.target.value)} placeholder="Counted cash" value={countedCash} />
+                      <input aria-label="Close note" onChange={(event) => setCloseNote(event.target.value)} placeholder="Note" value={closeNote} />
+                      <button onClick={() => void handleCloseShift()} type="button">Close Shift</button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="inline-fields">
+                    <input aria-label="Opening float" onChange={(event) => setOpeningFloat(event.target.value)} value={openingFloat} />
+                    <button onClick={() => void handleOpenShift()} type="button">Open Shift</button>
+                  </div>
+                )}
+                {lastZReport ? (
+                  <div className="z-report">
+                    <strong>Z report</strong>
+                    <span>Business date {lastZReport.businessDate}</span>
+                    <span>Orders {lastZReport.orderCount}</span>
+                    <span>Cash {money(lastZReport.tenders.cash)} · UPI {money(lastZReport.tenders.UPI)} · Card {money(lastZReport.tenders.card)}</span>
+                    <span>Expected {money(lastZReport.shift.expectedCash)} · Counted {money(lastZReport.shift.countedCash)} · Variance {money(lastZReport.shift.variance)}</span>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="topbar-item">
+            <button
+              aria-expanded={openPanel === "queue"}
+              className="chip-button"
+              data-testid="topbar-queue-trigger"
+              data-warn={pendingQueueCount > 0 || failedQueueCount > 0 || undefined}
+              onClick={() => setOpenPanel((current) => (current === "queue" ? null : "queue"))}
+              type="button"
+            >
+              <RefreshCcw aria-hidden size={14} />
+              {pendingQueueCount > 0 || failedQueueCount > 0 ? `${pendingQueueCount} pending · ${failedQueueCount} failed` : "Synced"}
+            </button>
+            {openPanel === "queue" ? (
+              <div className="popover popover-wide" role="dialog">
+                <h3>Queue</h3>
+                <p>{pendingQueueCount} pending · {failedQueueCount} failed</p>
+                {queuedSales.filter((sale) => sale.failedReason === "insufficient_stock").map((sale) => (
+                  <p className="failure" key={sale.id}>INSUFFICIENT_STOCK on replay: {sale.id}</p>
+                ))}
+                {queuedSales.filter((sale) => sale.failedReason === "terminal_revoked").map((sale) => (
+                  <p className="failure" key={sale.id}>terminal_revoked: {sale.id}</p>
+                ))}
+                <div className="button-row">
+                  <button onClick={() => void syncQueue()} type="button"><RefreshCcw aria-hidden size={16} /> Sync</button>
+                  <button onClick={() => void retryTerminalRevoked()} type="button">Retry Revoked</button>
+                  <button onClick={() => void exportQueue()} type="button"><Download aria-hidden size={16} /> Export JSON</button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="topbar-item">
+            <button
+              aria-expanded={openPanel === "recent"}
+              className="chip-button icon-only"
+              data-testid="topbar-recent-trigger"
+              onClick={() => setOpenPanel((current) => (current === "recent" ? null : "recent"))}
+              title="Recent reprint"
+              type="button"
+            >
+              <Printer aria-hidden size={16} />
+            </button>
+            {openPanel === "recent" ? (
+              <div className="popover popover-wide" role="dialog">
+                <h3>Recent Reprint</h3>
+                <div className="recent-list">
+                  {recentOrders.length ? (
+                    recentOrders.map((order) => (
+                      <button
+                        key={order.id}
+                        onClick={() => {
+                          setDuplicateOrder(order);
+                          setOpenPanel(null);
+                        }}
+                        type="button"
+                      >
+                        <span>{order.invoiceNumber ?? order.id}</span>
+                        <strong>DUPLICATE</strong>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="popover-note">No recent orders yet.</p>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
           <ThemeToggle />
         </div>
       </header>
@@ -939,7 +1131,7 @@ export function POSPage() {
 
       <section className="workspace">
         <section className="catalog-pane" aria-label="Product catalogue">
-          <div className="toolbar">
+          <div className="catalog-head">
             <label className="search-box">
               <Search aria-hidden size={18} />
               <input aria-label="Search products" onChange={(event) => setQuery(event.target.value)} placeholder="Search product, brand, style" value={query} />
@@ -948,6 +1140,20 @@ export function POSPage() {
               <ScanLine aria-hidden size={18} />
             </button>
           </div>
+
+          {brands.length > 1 ? (
+            <div className="brand-filter" role="tablist">
+              <button aria-pressed={brandFilter === null} onClick={() => setBrandFilter(null)} type="button">
+                All
+              </button>
+              {brands.map((brand) => (
+                <button aria-pressed={brandFilter === brand} key={brand} onClick={() => setBrandFilter(brand)} type="button">
+                  {brand}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           <div className="product-grid">
             {filteredProducts.map((product) => (
               <article className="product-card" key={product.id}>
@@ -962,9 +1168,16 @@ export function POSPage() {
                   }}
                   type="button"
                 >
-                  <strong>{product.name}</strong>
-                  <span>{product.brand}</span>
-                  <small>{product.styleCode}</small>
+                  <span aria-hidden className="product-tile-media">
+                    {product.imagePath ? <img alt="" src={product.imagePath} /> : <span className="product-monogram">{product.name.slice(0, 2).toUpperCase()}</span>}
+                  </span>
+                  <span className="product-tile-body">
+                    <strong>{product.name}</strong>
+                    <span className="product-tile-meta">
+                      {product.brand}
+                      {product.styleCode ? ` · ${product.styleCode}` : ""}
+                    </span>
+                  </span>
                 </button>
                 {expandedProductId === product.id && (
                   <div className="variant-list">
@@ -977,26 +1190,30 @@ export function POSPage() {
                       >
                         <span>{variant.color} / {variant.size}</span>
                         <strong>{money(variant.retailPrice)}</strong>
-                        <small>{variant.sku} · stock {variant.stock <= 0 ? "out of stock" : variant.stock}</small>
+                        <small>
+                          <span aria-hidden className="stock-dot" data-state={variant.stock <= 0 ? "out" : variant.stock <= 3 ? "low" : "ok"} />
+                          {variant.sku} · stock {variant.stock <= 0 ? "out of stock" : variant.stock}
+                        </small>
                       </button>
                     ))}
                   </div>
                 )}
               </article>
             ))}
+            {filteredProducts.length === 0 ? <p className="empty-note">No products match this search.</p> : null}
           </div>
         </section>
 
-        <aside className="cart-pane" aria-label="Cart">
+        <aside className="checkout-rail" aria-label="Checkout">
           <div className="cart-header">
-            <div className="cart-title">
-              <h2>Cart</h2>
-              <span>{cart.length} lines</span>
-            </div>
-            <div className="cart-total">{money(payableTotal)}</div>
+            <h2>Cart</h2>
+            <span>
+              {cart.length} {cart.length === 1 ? "line" : "lines"}
+            </span>
           </div>
 
           <div className="cart-lines">
+            {cart.length === 0 ? <p className="empty-note">Cart is empty. Add a product to start a sale.</p> : null}
             {cart.map((item) => (
               <article className="cart-line" key={item.variant.id}>
                 <div className="line-main">
@@ -1124,20 +1341,51 @@ export function POSPage() {
             ))}
           </div>
 
-          <section className="panel">
-            <h3>Order Discount</h3>
-            <div className="inline-fields">
-              <select aria-label="Order discount type" onChange={(event) => setOrderDiscountType(event.target.value as DiscountType)} value={orderDiscountType}>
-                <option value="flat">₹ off</option>
-                <option value="percent">% off</option>
-              </select>
-              <input aria-label="Order discount value" min="0" onChange={(event) => setOrderDiscountValue(event.target.value)} type="number" value={orderDiscountValue} />
+          <div className="summary-block">
+            <div className="summary-row">
+              <span>Subtotal</span>
+              <span>{money(rawSubtotal)}</span>
             </div>
-          </section>
+            <div className="summary-row summary-discount-row">
+              <button className="summary-discount-toggle" onClick={() => setDiscountOpen((open) => !open)} type="button">
+                Discount {orderDiscount > 0 ? `· ${orderDiscountType === "percent" ? `${orderDiscountValue}%` : money(orderDiscountValue)}` : "· Add"}
+              </button>
+              <span>{money(rawSubtotal - payableTotal)}</span>
+            </div>
+            {discountExpanded ? (
+              <div className="inline-fields discount-fields">
+                <select aria-label="Order discount type" onChange={(event) => setOrderDiscountType(event.target.value as DiscountType)} value={orderDiscountType}>
+                  <option value="flat">₹ off</option>
+                  <option value="percent">% off</option>
+                </select>
+                <input aria-label="Order discount value" min="0" onChange={(event) => setOrderDiscountValue(event.target.value)} type="number" value={orderDiscountValue} />
+              </div>
+            ) : null}
+            <div className="summary-row summary-total">
+              <span>Total</span>
+              <span>{money(payableTotal)}</span>
+            </div>
+          </div>
 
-          <section className="panel">
-            <h3>Split Tender</h3>
-            {tenders.map((tender, index) => (
+          <section className="payment-block">
+            <div className="payment-methods">
+              <button onClick={() => setTenders([{ amount: decimal(payableTotal), method: "cash" }])} type="button">
+                Cash Exact
+              </button>
+              <button onClick={() => setTenders([{ amount: decimal(payableTotal), method: "UPI" }])} type="button">
+                UPI Exact
+              </button>
+              <button onClick={() => setTenders([{ amount: decimal(payableTotal), method: "card" }])} type="button">
+                <CreditCard aria-hidden size={16} /> Card Exact
+              </button>
+              <button aria-pressed={splitExpanded} className="split-toggle" onClick={() => setSplitOpen((open) => !open)} type="button">
+                Split
+              </button>
+            </div>
+
+            {splitExpanded ? (
+              <div className="split-tender">
+                {tenders.map((tender, index) => (
               <div className="tender-row" key={index}>
                 <select
                   aria-label={`Tender method ${index + 1}`}
@@ -1175,88 +1423,22 @@ export function POSPage() {
                     </label>
                   </div>
                 ) : null}
+                  </div>
+                ))}
+                <button onClick={() => setTenders((current) => [...current, { amount: "0.00", method: "cash" }])} type="button">
+                  Add Tender
+                </button>
               </div>
-            ))}
-            <div className="button-row">
-              <button onClick={() => setTenders((current) => [...current, { amount: "0.00", method: "cash" }])} type="button">Add Tender</button>
-              <button onClick={() => setTenders([{ amount: decimal(payableTotal), method: "cash" }])} type="button">Cash Exact</button>
-              <button onClick={() => setTenders([{ amount: decimal(payableTotal), method: "UPI" }])} type="button">UPI Exact</button>
-              <button onClick={() => setTenders([{ amount: decimal(payableTotal), method: "card" }])} type="button">
-                <CreditCard aria-hidden size={16} /> Card Exact
-              </button>
-            </div>
-          </section>
+            ) : null}
 
-          <section className="panel">
-            <h3>Receipt</h3>
-            <input aria-label="Receipt email" onChange={(event) => setReceiptEmail(event.target.value)} placeholder="customer@example.com" value={receiptEmail} />
-            <button className="btn-primary" disabled={!cart.length || !shiftReport} onClick={() => void checkout()} type="button">
-              <BadgeCheck aria-hidden size={18} /> Pay
+            <input aria-label="Receipt email" className="receipt-email-input" onChange={(event) => setReceiptEmail(event.target.value)} placeholder="Receipt email (optional)" value={receiptEmail} />
+
+            <button className="btn-primary btn-pay" disabled={!cart.length || !shiftReport} onClick={() => void checkout()} type="button">
+              <BadgeCheck aria-hidden size={18} /> Pay {money(payableTotal)}
             </button>
             {!shiftReport && <p className="pay-blocked-note">Open a shift to enable Pay.</p>}
           </section>
         </aside>
-      </section>
-
-      <section className="ops-grid">
-        <section className="panel">
-          <h2>Cashier</h2>
-          <div className="inline-fields">
-            <select aria-label="Cashier picker" onChange={(event) => setCashierId(event.target.value)} value={cashierId}>
-              <option value="">Select cashier</option>
-              {cashiers.map((cashier) => (
-                <option key={cashier.id ?? cashier.cashierId} value={cashier.id ?? cashier.cashierId}>{cashier.name}</option>
-              ))}
-            </select>
-            <input aria-label="Cashier PIN" onChange={(event) => setCashierPin(event.target.value)} placeholder="PIN" type="password" value={cashierPin} />
-            <button onClick={() => void chooseCashier()} type="button">Switch</button>
-            {activeCashier ? <button onClick={signOutCashier} type="button">Sign out cashier</button> : null}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>Shift</h2>
-          {shiftReport ? (
-            <>
-              <p>X report: {shiftReport.orderCount} orders · cash {money(shiftReport.tenders.cash)} · UPI {money(shiftReport.tenders.UPI)} · card {money(shiftReport.tenders.card)}</p>
-              <div className="inline-fields">
-                <input aria-label="Counted cash" onChange={(event) => setCountedCash(event.target.value)} placeholder="Counted cash" value={countedCash} />
-                <input aria-label="Close note" onChange={(event) => setCloseNote(event.target.value)} placeholder="Note" value={closeNote} />
-                <button onClick={() => void handleCloseShift()} type="button">Close Shift</button>
-              </div>
-            </>
-          ) : (
-            <div className="inline-fields">
-              <input aria-label="Opening float" onChange={(event) => setOpeningFloat(event.target.value)} value={openingFloat} />
-              <button onClick={() => void handleOpenShift()} type="button">Open Shift</button>
-            </div>
-          )}
-          {lastZReport ? (
-            <div className="z-report">
-              <strong>Z report</strong>
-              <span>Business date {lastZReport.businessDate}</span>
-              <span>Orders {lastZReport.orderCount}</span>
-              <span>Cash {money(lastZReport.tenders.cash)} · UPI {money(lastZReport.tenders.UPI)} · Card {money(lastZReport.tenders.card)}</span>
-              <span>Expected {money(lastZReport.shift.expectedCash)} · Counted {money(lastZReport.shift.countedCash)} · Variance {money(lastZReport.shift.variance)}</span>
-            </div>
-          ) : null}
-        </section>
-
-        <section className="panel">
-          <h2>Queue</h2>
-          <p>{queuedSales.filter((sale) => sale.status === "pending").length} pending · {queuedSales.filter((sale) => sale.status === "failed").length} failed</p>
-          {queuedSales.filter((sale) => sale.failedReason === "insufficient_stock").map((sale) => (
-            <p className="failure" key={sale.id}>INSUFFICIENT_STOCK on replay: {sale.id}</p>
-          ))}
-          {queuedSales.filter((sale) => sale.failedReason === "terminal_revoked").map((sale) => (
-            <p className="failure" key={sale.id}>terminal_revoked: {sale.id}</p>
-          ))}
-          <div className="button-row">
-            <button onClick={() => void syncQueue()} type="button"><RefreshCcw aria-hidden size={16} /> Sync</button>
-            <button onClick={() => void retryTerminalRevoked()} type="button">Retry Revoked</button>
-            <button onClick={() => void exportQueue()} type="button"><Download aria-hidden size={16} /> Export JSON</button>
-          </div>
-        </section>
       </section>
 
       {receiptOrder ? (
@@ -1312,18 +1494,6 @@ export function POSPage() {
           </div>
         </section>
       ) : null}
-
-      <section className="panel recent">
-        <h2>Recent Reprint</h2>
-        <div className="recent-list">
-          {recentOrders.map((order) => (
-            <button key={order.id} onClick={() => setDuplicateOrder(order)} type="button">
-              <span>{order.invoiceNumber ?? order.id}</span>
-              <strong>DUPLICATE</strong>
-            </button>
-          ))}
-        </div>
-      </section>
     </main>
   );
 }

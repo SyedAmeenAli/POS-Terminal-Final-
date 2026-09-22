@@ -44,7 +44,7 @@ select {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font: inherit;
-  min-height: 40px;
+  min-height: 38px;
   transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out),
     color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
 }
@@ -56,9 +56,10 @@ button {
   cursor: pointer;
   display: inline-flex;
   font-weight: 600;
+  font-size: 0.875rem;
   gap: 6px;
   justify-content: center;
-  padding: 8px 14px;
+  padding: 7px 12px;
 }
 
 button:hover:not(:disabled) {
@@ -67,7 +68,7 @@ button:hover:not(:disabled) {
 }
 
 button:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
 }
 
 button:disabled {
@@ -75,7 +76,6 @@ button:disabled {
   opacity: 0.5;
 }
 
-/* Primary action: Pay, Save Token, Owner Authorise. */
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -92,7 +92,7 @@ select {
   background: var(--surface);
   color: var(--text);
   min-width: 0;
-  padding: 8px 10px;
+  padding: 7px 10px;
   width: 100%;
 }
 
@@ -103,6 +103,13 @@ select:focus-visible {
 
 input::placeholder {
   color: var(--text-faint);
+}
+
+.empty-note {
+  color: var(--text-faint);
+  font-size: 0.875rem;
+  padding: 24px 4px;
+  text-align: center;
 }
 
 /* Logo + wordmark ------------------------------------------------------- */
@@ -194,9 +201,9 @@ input::placeholder {
 .pos-app {
   animation: fade-up var(--dur-page) var(--ease-out);
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-height: 100vh;
-  padding: 12px;
+  padding: 10px 14px 14px;
 }
 
 @keyframes fade-up {
@@ -210,6 +217,20 @@ input::placeholder {
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Top bar ------------------------------------------------------------------
+   Compact identity strip. Cashier/shift/queue/recent are low-frequency
+   operational controls, so they live as popovers off small trigger chips
+   rather than permanent screen real estate — see .popover below. */
+
 .top-bar {
   align-items: center;
   background: var(--surface);
@@ -218,74 +239,125 @@ input::placeholder {
   display: flex;
   gap: 16px;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 8px 14px;
+  position: relative;
 }
 
-.identity-group {
+.topbar-controls {
   align-items: center;
   display: flex;
-  flex-shrink: 0;
-  gap: 12px;
-}
-
-.status-banner {
-  align-items: center;
-  display: flex;
-  flex: 1;
-  gap: 14px;
-  justify-content: flex-end;
-  line-height: 1.4;
-  min-width: 0;
-  text-align: right;
-}
-
-.status-banner span {
-  align-items: center;
-  color: var(--text-muted);
-  display: inline-flex;
-  font-size: 0.875rem;
   gap: 6px;
-  min-width: 0;
 }
 
-/* Status / chip language ----------------------------------------------------
-   One visual grammar for every state in the app: online/offline, queue,
-   pending, failed. Never a bespoke badge style per page. */
+.topbar-item {
+  position: relative;
+}
 
-.chip {
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-pill);
+.chip-button {
+  align-items: center;
+  background: transparent;
+  border-color: transparent;
   color: var(--text-muted);
   display: inline-flex;
-  font-size: 12.5px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  padding: 4px 10px;
-  white-space: nowrap;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 10px;
 }
 
-.chip[data-mode="online"] {
-  background: rgb(159 255 192 / 0.12);
-  border-color: rgb(159 255 192 / 0.4);
+.chip-button:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+  transform: none;
+}
+
+.chip-button[aria-expanded="true"] {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.chip-button.icon-only {
+  padding: 5px;
+}
+
+.chip-button[data-warn] {
+  color: var(--warning);
+}
+
+.chip-button[data-mode="online"] {
   color: var(--accent);
 }
 
-.chip[data-mode="offline"],
-.chip[data-mode="backend_unreachable"],
-.chip[data-mode="database_down"],
-.chip.warn,
-.trust-banner,
-.failure {
-  background: rgb(244 201 107 / 0.12);
-  border-color: rgb(244 201 107 / 0.45);
+.status-dot {
+  background: currentColor;
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 7px;
+  width: 7px;
+}
+
+/* Popovers ------------------------------------------------------------- */
+
+.popover {
+  animation: popover-in var(--dur-micro) var(--ease-out);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  gap: 10px;
+  left: 0;
+  min-width: 240px;
+  padding: 14px;
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 30;
+}
+
+.popover-wide {
+  min-width: 320px;
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popover h3 {
+  font-size: 0.9375rem;
+}
+
+.popover p {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.popover-note {
   color: var(--warning);
 }
+
+.popover-fields {
+  display: grid;
+  gap: 8px;
+}
+
+/* Banners ------------------------------------------------------------------ */
 
 .trust-banner,
 .message {
   animation: fade-up var(--dur-normal) var(--ease-out);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  font-size: 0.875rem;
+  padding: 9px 14px;
 }
 
 .trust-banner {
@@ -300,98 +372,230 @@ input::placeholder {
   color: var(--info);
 }
 
-/* Workspace ------------------------------------------------------------- */
+.owner-override-banner {
+  align-items: center;
+  animation: fade-up var(--dur-normal) var(--ease-out);
+  background: var(--accent);
+  border-radius: var(--radius-md);
+  color: var(--accent-ink);
+  display: flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 9px 16px;
+}
 
-.workspace {
+.owner-override-banner button {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+  color: var(--accent-strong);
+}
+
+.modal-backdrop {
+  align-items: center;
+  animation: fade-in var(--dur-normal) var(--ease-out);
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 16px;
+  position: fixed;
+  z-index: 40;
+}
+
+.owner-modal {
+  animation: modal-in var(--dur-normal) var(--ease-out);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+  max-width: 360px;
+  padding: 20px;
+  width: 100%;
 }
 
-.catalog-pane,
-.cart-pane,
-.ops-grid,
-.cart-lines,
-.variant-list,
-.recent-list {
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.error-text {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* Workspace: DISCOVER (catalog) | REVIEW + PAY (checkout rail) ----------- */
+
+.workspace {
+  align-items: start;
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 400px;
 }
 
-.toolbar,
-.search-box,
-.button-row,
-.inline-fields {
+.catalog-pane {
+  display: grid;
+  gap: 12px;
+}
+
+.catalog-head {
   align-items: center;
   display: flex;
   gap: 8px;
 }
 
 .search-box {
+  align-items: center;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-faint);
+  display: flex;
   flex: 1;
-  padding-left: 10px;
+  gap: 8px;
+  padding-left: 12px;
 }
 
 .search-box input {
   border: 0;
+  min-height: 40px;
+}
+
+.catalog-head > button {
+  flex-shrink: 0;
+  min-height: 40px;
+  width: 40px;
+}
+
+.brand-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.brand-filter button {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  min-height: 30px;
+  padding: 4px 12px;
+}
+
+.brand-filter button[aria-pressed="true"] {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 .product-grid {
   display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .product-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   display: grid;
   overflow: hidden;
-  transition: border-color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+  transition: border-color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
 }
 
 .product-card:hover {
   border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
 }
 
-.product-card > button,
-.variant-list button,
-.recent-list button {
-  align-items: flex-start;
+.product-card > button {
   background: transparent;
   border: 0;
   border-radius: 0;
   color: var(--text);
   display: grid;
-  gap: 2px;
-  justify-content: stretch;
+  gap: 0;
+  min-height: unset;
+  padding: 0;
   text-align: left;
 }
 
-.product-card > button strong {
-  font-family: var(--font-display);
+.product-tile-media {
+  align-items: center;
+  aspect-ratio: 4 / 3;
+  background: var(--surface-2);
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
 }
 
-.product-card > button span,
-.product-card > button small {
+.product-tile-media img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.product-monogram {
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.product-tile-body {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+}
+
+.product-tile-body strong {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-tile-meta {
   color: var(--text-muted);
+  font-size: 0.8125rem;
 }
 
 .variant-list {
   border-top: 1px solid var(--border);
-  padding: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
 }
 
 .variant-list button {
+  align-items: flex-start;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  color: var(--text);
+  display: grid;
+  gap: 2px;
+  justify-content: stretch;
+  text-align: left;
 }
 
 .variant-list button:not(:disabled):hover {
@@ -403,77 +607,106 @@ input::placeholder {
 }
 
 .variant-list button small {
+  align-items: center;
   color: var(--text-muted);
+  display: inline-flex;
+  gap: 5px;
 }
 
-/* Cart -------------------------------------------------------------------- */
+.stock-dot {
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 6px;
+  width: 6px;
+}
 
-.cart-pane {
-  align-self: start;
+.stock-dot[data-state="ok"] {
+  background: var(--accent);
+}
+
+.stock-dot[data-state="low"] {
+  background: var(--warning);
+}
+
+.stock-dot[data-state="out"] {
+  background: var(--danger);
+}
+
+/* Checkout rail --------------------------------------------------------- */
+
+.checkout-rail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  position: sticky;
+  top: 10px;
 }
 
 .cart-header {
-  align-items: start;
+  align-items: baseline;
   display: flex;
-  gap: 12px;
   justify-content: space-between;
 }
 
-.cart-title span {
+.cart-header span {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
 }
 
-.cart-total {
-  flex: 1;
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.4;
-  min-width: 0;
-  text-align: right;
-  transition: color var(--dur-micro) var(--ease-out);
+.cart-lines {
+  display: grid;
+  gap: 8px;
+  max-height: 34vh;
+  overflow-y: auto;
 }
 
 .cart-line {
   animation: fade-up var(--dur-normal) var(--ease-out);
-  background: var(--surface);
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   display: grid;
-  gap: 10px;
+  gap: 8px;
   grid-template-columns: minmax(0, 1fr) auto;
-  padding: 10px;
+  padding: 8px 10px;
 }
 
 .line-main {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .line-main strong {
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 
 .line-main span {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
 }
 
 .stepper {
   align-items: center;
   display: grid;
   flex-shrink: 0;
-  gap: 4px;
-  grid-template-columns: 32px 72px auto 32px 32px;
+  gap: 3px;
+  grid-template-columns: 26px 60px auto 26px 26px;
+}
+
+.stepper button {
+  min-height: 26px;
+  padding: 0;
 }
 
 .cart-qty-input {
   font-variant-numeric: tabular-nums;
-  min-height: 32px;
-  padding: 0 6px;
+  min-height: 26px;
+  padding: 0 4px;
   text-align: right;
   width: 100%;
 }
@@ -491,34 +724,24 @@ input::placeholder {
 
 .cart-qty-unit {
   color: var(--text-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
 .cart-line-batch {
   color: var(--text-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .cart-qty-error,
-.pay-blocked-note,
-.error-text {
+.pay-blocked-note {
   color: var(--danger);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .pay-blocked-note {
-  margin: 4px 0 0;
+  margin: -2px 0 0;
   text-align: center;
-}
-
-.error-text {
-  font-weight: 700;
-}
-
-.stepper button {
-  min-height: 32px;
-  padding: 0;
 }
 
 .cart-line-remove {
@@ -533,33 +756,107 @@ input::placeholder {
 
 .discount-grid {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   grid-column: 1 / -1;
-  grid-template-columns: minmax(82px, 0.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(70px, 0.4fr) minmax(0, 1fr);
 }
 
-/* Panels -------------------------------------------------------------------
-   One panel system for Order Discount, Split Tender, Receipt, Cashier,
-   Shift, Queue. */
+.discount-grid select,
+.discount-grid input {
+  min-height: 30px;
+  padding: 4px 8px;
+}
 
-.panel {
+/* Checkout summary: subtotal / discount / total, one connected block ----- */
+
+.summary-block {
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+}
+
+.summary-row {
+  align-items: center;
+  display: flex;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  justify-content: space-between;
+}
+
+.summary-row > span:last-child {
+  color: var(--text-muted);
+}
+
+.summary-discount-toggle {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-height: unset;
+  padding: 0;
+}
+
+.summary-discount-toggle:hover {
+  color: var(--accent);
+  transform: none;
+}
+
+.discount-fields {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(80px, 0.4fr) minmax(0, 1fr);
+}
+
+.summary-total {
+  border-top: 1px dashed var(--border-strong);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 800;
+  padding-top: 8px;
+}
+
+.summary-total > span:last-child {
+  color: var(--text);
+}
+
+/* Payment ----------------------------------------------------------------- */
+
+.payment-block {
+  display: grid;
+  gap: 10px;
+}
+
+.payment-methods {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.payment-methods button {
+  font-size: 0.8125rem;
+  padding: 6px 4px;
+}
+
+.split-toggle[aria-pressed="true"] {
   background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.split-tender {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   display: grid;
-  gap: 12px;
-  padding: 16px;
-}
-
-.panel h2,
-.panel h3 {
-  font-size: 1rem;
+  gap: 8px;
+  padding: 10px;
 }
 
 .tender-row {
   display: grid;
   gap: 8px;
-  grid-template-columns: 110px minmax(0, 1fr);
+  grid-template-columns: 100px minmax(0, 1fr);
 }
 
 .card-fields {
@@ -576,14 +873,16 @@ input::placeholder {
   gap: 4px;
 }
 
-.ops-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.ops-grid p {
-  color: var(--text-muted);
+.receipt-email-input {
   font-size: 0.875rem;
 }
+
+.btn-pay {
+  font-size: 1rem;
+  min-height: 48px;
+}
+
+/* Queue / shift secondary readouts inside popovers ------------------------ */
 
 .z-report {
   background: var(--surface-2);
@@ -597,6 +896,35 @@ input::placeholder {
   font-family: var(--font-display);
 }
 
+.failure {
+  background: rgb(244 201 107 / 0.12);
+  border: 1px solid rgb(244 201 107 / 0.45);
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+  font-size: 0.8125rem;
+  padding: 6px 8px;
+}
+
+.button-row,
+.inline-fields {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.recent-list {
+  display: grid;
+  gap: 6px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.recent-list button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  text-align: left;
+}
+
 /* Receipt -------------------------------------------------------------- */
 
 .receipt-panel {
@@ -606,6 +934,8 @@ input::placeholder {
   border-radius: var(--radius-lg);
   display: grid;
   gap: 12px;
+  justify-self: end;
+  max-width: 420px;
   padding: 16px;
 }
 
@@ -668,119 +998,40 @@ input::placeholder {
   padding-top: 8px;
 }
 
-.recent-list {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-}
-
-.failure {
-  border-radius: var(--radius-sm);
-  padding: 8px;
-}
-
-/* Owner override ---------------------------------------------------------- */
-
-.owner-override-banner {
-  align-items: center;
-  animation: fade-up var(--dur-normal) var(--ease-out);
-  background: var(--accent);
-  border-radius: var(--radius-md);
-  color: var(--accent-ink);
-  display: flex;
-  font-weight: 600;
-  gap: 12px;
-  justify-content: space-between;
-  padding: 10px 16px;
-}
-
-.owner-override-banner button {
-  background: var(--accent-ink);
-  border-color: var(--accent-ink);
-  color: var(--accent-strong);
-}
-
-.modal-backdrop {
-  align-items: center;
-  animation: fade-in var(--dur-normal) var(--ease-out);
-  background: rgb(0 0 0 / 0.55);
-  backdrop-filter: blur(2px);
-  display: flex;
-  inset: 0;
-  justify-content: center;
-  padding: 16px;
-  position: fixed;
-  z-index: 20;
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+@media (max-width: 1180px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 360px;
   }
 }
 
-.owner-modal {
-  animation: modal-in var(--dur-normal) var(--ease-out);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  display: grid;
-  gap: 12px;
-  max-width: 360px;
-  padding: 20px;
-  width: 100%;
-}
-
-@keyframes modal-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.modal-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-@media (max-width: 820px) {
+@media (max-width: 900px) {
   .top-bar,
-  .status-banner,
-  .toolbar,
-  .button-row,
-  .inline-fields {
-    align-items: stretch;
-    flex-direction: column;
+  .topbar-controls {
+    flex-wrap: wrap;
   }
 
-  .status-banner {
-    text-align: left;
-  }
-
-  .workspace,
-  .ops-grid {
+  .workspace {
     grid-template-columns: 1fr;
   }
 
-  .cart-pane {
-    min-width: 0;
+  .checkout-rail {
+    position: static;
   }
 
   .cart-line,
   .tender-row,
-  .card-fields {
+  .card-fields,
+  .discount-grid {
     grid-template-columns: 1fr;
   }
 
   .stepper {
     justify-self: start;
+  }
+
+  .receipt-panel {
+    justify-self: stretch;
+    max-width: none;
   }
 }
 
@@ -803,6 +1054,8 @@ input::placeholder {
   .receipt-panel {
     border: 0;
     box-shadow: none;
+    justify-self: auto;
+    max-width: none;
     padding: 0;
   }
 

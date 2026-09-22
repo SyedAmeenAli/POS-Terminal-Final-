@@ -133,6 +133,16 @@ const saveToken = async () => {
   await userEvent.click(screen.getByRole("button", { name: /save token/i }));
 };
 
+// The redesign moved Cashier/Shift/Queue/Recent and the rarely-used
+// Discount/Split-Tender controls behind top-bar popovers and progressive
+// disclosure toggles — same handlers and aria-labels underneath, just not
+// rendered until opened. These helpers open them before a test reaches in.
+const openCashierPanel = () => userEvent.click(screen.getByTestId("topbar-cashier-trigger"));
+const openShiftPanel = () => userEvent.click(screen.getByTestId("topbar-shift-trigger"));
+const openRecentPanel = () => userEvent.click(screen.getByTestId("topbar-recent-trigger"));
+const openDiscountFields = () => userEvent.click(screen.getByRole("button", { name: /discount/i }));
+const openSplitTender = () => userEvent.click(screen.getByRole("button", { name: "Split" }));
+
 describe("POSPage", () => {
   it("shows setup without a token and sends bearer authorization after setup", async () => {
     const calls = installHappyFetch();
@@ -183,12 +193,15 @@ describe("POSPage", () => {
   it("completes a sale with discount, split tender, card slip fields, invoice and emailed receipt", async () => {
     const calls = installHappyFetch();
     await saveToken();
-    await userEvent.click(await screen.findByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(await screen.findByRole("button", { name: /^open shift$/i }));
 
     await userEvent.click(await screen.findByText("Very Long Product Name That Must Wrap Cleanly At Phone Width"));
     await userEvent.click(await screen.findByText(/Black \/ M/));
+    await openDiscountFields();
     await userEvent.clear(screen.getByLabelText("Order discount value"));
     await userEvent.type(screen.getByLabelText("Order discount value"), "50");
+    await openSplitTender();
     await userEvent.clear(screen.getByLabelText("Tender amount 1"));
     await userEvent.type(screen.getByLabelText("Tender amount 1"), "250.00");
     await userEvent.click(screen.getByRole("button", { name: /add tender/i }));
@@ -211,21 +224,25 @@ describe("POSPage", () => {
     const calls = installHappyFetch();
     await saveToken();
 
+    await openCashierPanel();
     await waitFor(() => expect(screen.getByRole("option", { name: "Asha" })).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /sign out cashier/i })).not.toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText("Cashier picker"), cashierId);
     await userEvent.type(screen.getByLabelText("Cashier PIN"), "1234");
     await userEvent.click(screen.getByRole("button", { name: /switch/i }));
     expect(await screen.findByRole("button", { name: /sign out cashier/i })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(screen.getByRole("button", { name: /^open shift$/i }));
     expect(await screen.findByText(/X report/)).toBeInTheDocument();
 
+    await openCashierPanel();
     await userEvent.click(screen.getByRole("button", { name: /sign out cashier/i }));
 
-    expect(screen.getByText("No cashier selected")).toBeInTheDocument();
+    expect(screen.getByTestId("topbar-cashier-trigger")).toHaveTextContent("No cashier");
     expect(screen.queryByRole("button", { name: /sign out cashier/i })).not.toBeInTheDocument();
     expect(screen.getByLabelText("Cashier picker")).toHaveValue("");
     expect(screen.getByLabelText("Cashier PIN")).toHaveValue("");
+    await openShiftPanel();
     expect(screen.getByText(/X report/)).toBeInTheDocument();
     expect(localStorage.getItem("pos_terminal_token")).toBe("terminal-secret");
 
@@ -272,7 +289,8 @@ describe("POSPage", () => {
       return ok({});
     }));
     await saveToken();
-    await userEvent.click(await screen.findByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(await screen.findByRole("button", { name: /^open shift$/i }));
 
     await userEvent.click(await screen.findByText("Very Long Product Name That Must Wrap Cleanly At Phone Width"));
     await userEvent.click(await screen.findByText(/Black \/ M/));
@@ -290,13 +308,16 @@ describe("POSPage", () => {
   it("does not queue offline sales that need owner override", async () => {
     installHappyFetch();
     await saveToken();
-    await userEvent.click(await screen.findByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(await screen.findByRole("button", { name: /^open shift$/i }));
 
     await userEvent.click(await screen.findByText("Very Long Product Name That Must Wrap Cleanly At Phone Width"));
     await userEvent.click(await screen.findByText(/Black \/ M/));
+    await openDiscountFields();
     await userEvent.selectOptions(screen.getByLabelText("Order discount type"), "percent");
     await userEvent.clear(screen.getByLabelText("Order discount value"));
     await userEvent.type(screen.getByLabelText("Order discount value"), "30");
+    await openSplitTender();
     await userEvent.clear(screen.getByLabelText("Tender amount 1"));
     await userEvent.type(screen.getByLabelText("Tender amount 1"), "350.00");
 
@@ -310,7 +331,8 @@ describe("POSPage", () => {
   it("keeps the connectivity chip steady and queues database-down cash sales", async () => {
     const calls = installHappyFetch();
     await saveToken();
-    await userEvent.click(await screen.findByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(await screen.findByRole("button", { name: /^open shift$/i }));
     await userEvent.click(await screen.findByText("Very Long Product Name That Must Wrap Cleanly At Phone Width"));
     await userEvent.click(await screen.findByText(/Black \/ M/));
     vi.stubGlobal(
@@ -330,7 +352,8 @@ describe("POSPage", () => {
   it("renders a full receipt and excludes forbidden data", async () => {
     installHappyFetch();
     await saveToken();
-    await userEvent.click(await screen.findByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(await screen.findByRole("button", { name: /^open shift$/i }));
 
     await userEvent.click(await screen.findByText("Very Long Product Name That Must Wrap Cleanly At Phone Width"));
     await userEvent.click(await screen.findByText(/Black \/ M/));
@@ -358,7 +381,8 @@ describe("POSPage", () => {
   it("marks terminal revoked replay entries, preserves them through token change, and exports queue JSON", async () => {
     installHappyFetch();
     await saveToken();
-    await userEvent.click(await screen.findByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(await screen.findByRole("button", { name: /^open shift$/i }));
     await userEvent.click(await screen.findByText("Very Long Product Name That Must Wrap Cleanly At Phone Width"));
     await userEvent.click(await screen.findByText(/Black \/ M/));
     vi.stubGlobal(
@@ -382,13 +406,15 @@ describe("POSPage", () => {
     const calls = installHappyFetch();
     await saveToken();
 
+    await openCashierPanel();
     await waitFor(() => expect(screen.getByRole("option", { name: "Asha" })).toBeInTheDocument());
     await userEvent.selectOptions(screen.getByLabelText("Cashier picker"), cashierId);
     await userEvent.type(screen.getByLabelText("Cashier PIN"), "1234");
     await userEvent.click(screen.getByRole("button", { name: /switch/i }));
-    await waitFor(() => expect(screen.getAllByText(/Asha/).length).toBeGreaterThan(1));
+    await waitFor(() => expect(screen.getAllByText(/Asha/).length).toBeGreaterThan(0));
 
-    await userEvent.click(screen.getByRole("button", { name: /open shift/i }));
+    await openShiftPanel();
+    await userEvent.click(screen.getByRole("button", { name: /^open shift$/i }));
     expect(await screen.findByText(/X report/)).toBeInTheDocument();
     expect(screen.queryByText(/Expected/)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /close shift/i }));
@@ -399,11 +425,12 @@ describe("POSPage", () => {
     expect(screen.getByText(/Expected/)).toBeInTheDocument();
     expect(screen.getByText(/Business date 2026-07-29/)).toBeInTheDocument();
     expect(screen.getByText(/Cash ₹0.00 · UPI ₹0.00 · Card ₹0.00/)).toBeInTheDocument();
-    expect(screen.getByText("No open shift")).toBeInTheDocument();
-    expect(screen.getAllByText(/Asha/).length).toBeGreaterThan(1);
+    expect(screen.getByTestId("topbar-shift-trigger")).toHaveTextContent("No open shift");
+    expect(screen.getAllByText(/Asha/).length).toBeGreaterThan(0);
     const closeCall = calls.find((call) => call.url.endsWith("/shifts/close"));
     expect(closeCall?.body).toMatchObject({ cashierId, countedCash: "100.00" });
 
+    await openRecentPanel();
     await userEvent.click(screen.getByRole("button", { name: /DUPLICATE/i }));
     expect(screen.getByText("DUPLICATE RECEIPT")).toBeInTheDocument();
   });
