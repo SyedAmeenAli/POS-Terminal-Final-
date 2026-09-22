@@ -1,0 +1,92 @@
+/* AxInventory design tokens.
+   Verified against alterx.co.in (2026-09-22): body font Inter, heading font
+   Manrope, dark bg rgb(3,8,6), text rgb(232,247,238), accent mint
+   rgb(159,255,192). Light mode is a deliberate counterpart, not an inversion. */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #030806;
+  --bg-elevated: #060f09;
+  --surface: #0b1712;
+  --surface-2: #101f19;
+  --border: #1c2f27;
+  --border-strong: #2a4238;
+
+  --text: #e8f7ee;
+  --text-muted: #91a89b;
+  --text-faint: #5c7268;
+
+  --accent: #9fffc0;
+  --accent-strong: #d8ffe7;
+  --accent-ink: #032b16;
+
+  --success: #9fffc0;
+  --warning: #f4c96b;
+  --warning-ink: #4a3300;
+  --danger: #ff8f7d;
+  --danger-ink: #4a1208;
+  --info: #9cc6ff;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 0.36);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+
+  --font-body: "Inter", "Inter Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope", "Manrope Fallback", var(--font-body);
+  --font-mono: "SFMono-Regular", ui-monospace, "Courier New", monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 180ms;
+  --dur-normal: 280ms;
+  --dur-page: 420ms;
+
+  --focus-ring: 0 0 0 3px rgb(159 255 192 / 0.35);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #faf8f2;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1efe6;
+  --border: #e1dccb;
+  --border-strong: #cdc6ac;
+
+  --text: #16211a;
+  --text-muted: #5b6a5f;
+  --text-faint: #8b9689;
+
+  --accent: #0f8a4d;
+  --accent-strong: #0b6b3b;
+  --accent-ink: #f2fff6;
+
+  --success: #0f8a4d;
+  --warning: #8a5a00;
+  --warning-ink: #fff6e0;
+  --danger: #a3341f;
+  --danger-ink: #fff0ec;
+  --info: #1f5fb8;
+
+  --focus-ring: 0 0 0 3px rgb(15 138 77 / 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-micro: 0ms;
+    --dur-normal: 0ms;
+    --dur-page: 0ms;
+  }
+}

@@ -138,7 +138,7 @@ describe("POSPage", () => {
     const calls = installHappyFetch();
     await saveToken();
 
-    await waitFor(() => expect(screen.getByText("POS Terminal")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText((_, element) => element?.className === "ax-wordmark")).toBeInTheDocument());
     expect(
       calls.some((call) => call.headers instanceof Headers && call.headers.get("Authorization") === "Bearer terminal-secret"),
     ).toBe(true);
@@ -337,7 +337,7 @@ describe("POSPage", () => {
     await userEvent.click(screen.getByRole("button", { name: /pay/i }));
 
     const receipt = await screen.findByLabelText("Receipt");
-    expect(receipt).toHaveTextContent("POS Terminal");
+    expect(receipt).toHaveTextContent("AxInventory");
     expect(receipt).toHaveTextContent("TILL RECEIPT");
     expect(receipt).toHaveTextContent("INV/2026-27/000001");
     expect(receipt).toHaveTextContent(orderId.slice(0, 8));

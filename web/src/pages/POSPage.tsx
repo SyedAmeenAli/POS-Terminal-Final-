@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { AxLogo } from "../components/AxLogo";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { ApiError, getStoredTerminalToken, setStoredTerminalToken } from "../api/client";
 import {
   closeShift,
@@ -784,8 +786,9 @@ export function POSPage() {
     return (
       <main className="setup-screen">
         <section className="setup-panel">
-          <ShieldAlert aria-hidden />
+          <AxLogo active size={56} />
           <h1>Terminal Setup</h1>
+          <p>Enter the terminal token a supervisor provisioned to unlock this till.</p>
           <input
             aria-label="Terminal token"
             onChange={(event) => setTokenInput(event.target.value)}
@@ -794,6 +797,7 @@ export function POSPage() {
             value={tokenInput}
           />
           <button
+            className="btn-primary"
             onClick={() => {
               setStoredTerminalToken(tokenInput);
               setHasToken(Boolean(tokenInput.trim()));
@@ -811,6 +815,7 @@ export function POSPage() {
     return (
       <main className="setup-screen">
         <section className="setup-panel">
+          <AxLogo size={56} />
           <ShieldAlert aria-hidden />
           <h1>Terminal Not Authorised</h1>
           <p>The stored token was not cleared. Re-enter a replacement token when ready.</p>
@@ -822,6 +827,7 @@ export function POSPage() {
             value={tokenInput}
           />
           <button
+            className="btn-primary"
             onClick={() => {
               setStoredTerminalToken(tokenInput);
               setTerminalBlocked(false);
@@ -876,7 +882,7 @@ export function POSPage() {
     <main className="pos-app">
       <header className="top-bar">
         <div className="identity-group">
-          <strong>POS Terminal</strong>
+          <AxLogo size={28} />
           <span className="chip" data-mode={failureMode}>
             {connectivityLabel}
           </span>
@@ -888,6 +894,7 @@ export function POSPage() {
             <UserRound aria-hidden size={16} />
             {activeCashier ? `${activeCashier.name}${activeCashier.verified ? "" : " (unverified)"}` : "No cashier selected"}
           </span>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -924,7 +931,7 @@ export function POSPage() {
               >
                 Cancel
               </button>
-              <button onClick={() => void submitOwnerOverride()} type="button">Authorise</button>
+              <button className="btn-primary" onClick={() => void submitOwnerOverride()} type="button">Authorise</button>
             </div>
           </section>
         </div>
@@ -1183,7 +1190,7 @@ export function POSPage() {
           <section className="panel">
             <h3>Receipt</h3>
             <input aria-label="Receipt email" onChange={(event) => setReceiptEmail(event.target.value)} placeholder="customer@example.com" value={receiptEmail} />
-            <button disabled={!cart.length || !shiftReport} onClick={() => void checkout()} type="button">
+            <button className="btn-primary" disabled={!cart.length || !shiftReport} onClick={() => void checkout()} type="button">
               <BadgeCheck aria-hidden size={18} /> Pay
             </button>
             {!shiftReport && <p className="pay-blocked-note">Open a shift to enable Pay.</p>}
@@ -1256,7 +1263,7 @@ export function POSPage() {
         <section className="receipt-panel" aria-label={duplicateOrder ? "Duplicate receipt" : "Receipt"}>
           <div className="receipt-paper">
             <div className="receipt-center">
-              <strong>POS Terminal</strong>
+              <strong>AxInventory</strong>
               <span>{duplicateOrder ? "DUPLICATE RECEIPT" : "TILL RECEIPT"}</span>
               {receiptMarker ? <span className="receipt-marker">{receiptMarker}</span> : null}
             </div>
